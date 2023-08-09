@@ -102,3 +102,6 @@ func WithCaller(err error, opts ...WrapOption) error {
 	// TODO: check with bench wrap with https://github.com/go-faster/errors or uber code
 	// return errors.Wrap(err, info.ToString())
 }
+
+// TODO: do callerf analogue via option
+// errorwith.WithCaller(err, errorwith.Message("%s - %d", str, id))
