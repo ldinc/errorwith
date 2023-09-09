@@ -1,7 +1,6 @@
 package wrap
 
 import (
-	"fmt"
 	"runtime"
 	"strconv"
 	"strings"
@@ -17,12 +16,9 @@ type fnInfo struct {
 	FuncName string
 	FileName string
 	LineNum  int
-
-	skipSourceFile bool
-	noLineNo       bool
 }
 
-func (info fnInfo) getName() string {
+func (info fnInfo) GetName() string {
 	if info.FuncName == "" {
 		return ""
 	}
@@ -33,7 +29,7 @@ func (info fnInfo) getName() string {
 	return target
 }
 
-func (info fnInfo) getSource() string {
+func (info fnInfo) GetSource() string {
 	elems := strings.Split(info.FileName, "/")
 
 	if len(elems) > dirLen {
@@ -43,21 +39,18 @@ func (info fnInfo) getSource() string {
 	return info.FileName
 }
 
+func (info fnInfo) GetLineNo() int {
+	return info.LineNum
+}
+
 func (info fnInfo) ToString() string {
 	var sb strings.Builder
 
-	if !info.skipSourceFile {
-		sb.WriteString(info.getSource())
-
-		if !info.noLineNo {
-			sb.WriteRune(':')
-			sb.WriteString(strconv.Itoa(info.LineNum))
-		}
-
-		sb.WriteRune(' ')
-	}
-
-	sb.WriteString(info.getName())
+	sb.WriteString(info.GetSource())
+	sb.WriteRune(':')
+	sb.WriteString(strconv.Itoa(info.LineNum))
+	sb.WriteRune(' ')
+	sb.WriteString(info.GetName())
 
 	return sb.String()
 }
@@ -83,7 +76,7 @@ func extractFnInfo() (fnInfo, bool) {
 	return info, true
 }
 
-func WithCaller(err error, opts ...WrapOption) error {
+func With(err error, opts ...WrapOption) error {
 	if err == nil {
 		return nil
 	}
@@ -94,14 +87,11 @@ func WithCaller(err error, opts ...WrapOption) error {
 		return err
 	}
 
+	builder := defaultWrapBuilder(err, info)
+
 	for _, opt := range opts {
-		opt.apply(&info)
+		opt.apply(builder)
 	}
 
-	return fmt.Errorf("%s: %w", info.ToString(), err)
-	// TODO: check with bench wrap with https://github.com/go-faster/errors or uber code
-	// return errors.Wrap(err, info.ToString())
+	return builder.Build()
 }
-
-// TODO: do callerf analogue via option
-// errorwith.WithCaller(err, errorwith.Message("%s - %d", str, id))

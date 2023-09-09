@@ -1,23 +1,40 @@
 package wrap
 
+var _ iBuilder = (*wrapBuilder)(nil)
+
 type WrapOption interface {
-	apply(*fnInfo)
+	apply(iBuilder)
+}
+
+type iBuilder interface {
+	WithoutErrorSource()
+	WithFormatMessage(string, ...interface{})
+}
+
+type noErrorSource struct{}
+
+func (noErrorSource) apply(b iBuilder) {
+	b.WithoutErrorSource()
+}
+
+func NoErrorSource() WrapOption {
+	return noErrorSource{}
+}
+
+type formatMessage struct {
+	format string
+	args   []any
+}
+
+func (fm formatMessage) apply(b iBuilder) {
+	b.WithFormatMessage(fm.format, fm.args...)
+}
+
+func Format(format string, a ...any) WrapOption {
+	return &formatMessage{
+		format: format,
+		args:   a,
+	}
 }
 
 // https://github.com/grpc/grpc-go/blob/master/dialoptions.go#L86
-
-type defaultOptions struct{}
-
-func (defaultOptions) apply(*fnInfo) {}
-
-type dontShowSourceFile struct{}
-
-func (dontShowSourceFile) apply(cfg *fnInfo) {
-	cfg.skipSourceFile = true
-}
-
-type dontShowSourceFileLineNo struct{}
-
-func (dontShowSourceFileLineNo) apply(cfg *fnInfo) {
-	cfg.noLineNo = true
-}

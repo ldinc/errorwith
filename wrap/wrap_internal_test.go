@@ -9,20 +9,20 @@ import (
 var errNotFound = errors.New("not found")
 
 func a() error {
-	return wrap.WithCaller(b(c))
+	return wrap.With(b(c))
 }
 
 func b(fn func() error) error {
-	return wrap.WithCaller(fn())
+	return wrap.With(fn())
 }
 
 func c() error {
-	return wrap.WithCaller(d())
+	return wrap.With(d())
 }
 
 func d() error {
-	return wrap.WithCaller(func() error {
-		return wrap.WithCaller(errNotFound)
+	return wrap.With(func() error {
+		return wrap.With(errNotFound)
 	}(),
 	)
 }
